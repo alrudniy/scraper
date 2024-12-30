@@ -179,26 +179,75 @@ class WebsiteAutomation:
             
     def scroll_results(self, scroll_pause_time=1.0):
         try:
+            # Scroll to bottom
             last_height = self.driver.execute_script("return document.body.scrollHeight")
-            
             while True:
-                # Scroll down
                 self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                
-                # Wait for page to load
                 time.sleep(scroll_pause_time)
-                
-                # Calculate new scroll height
                 new_height = self.driver.execute_script("return document.body.scrollHeight")
-                
-                # Break if bottom reached
                 if new_height == last_height:
                     break
-                    
                 last_height = new_height
+            
+            # Scroll back to top
+            self.driver.execute_script("window.scrollTo(0, 0);")
+            time.sleep(scroll_pause_time)
+            
+            # Find and process all job listings
+            job_cards = self.wait.until(
+                EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.WpHeLc"))
+            )
+            
+            for card in job_cards:
+                try:
+                    # Click the job card
+                    card.click()
+                    time.sleep(2)  # Wait for job details to load
+                    
+                    # Click "More job highlights" if present
+                    try:
+                        more_highlights = self.wait.until(
+                            EC.presence_of_element_located((By.XPATH, "//button[contains(text(), 'More job highlights')]"))
+                        )
+                        more_highlights.click()
+                        time.sleep(1)
+                    except:
+                        print("No 'More job highlights' button found")
+                    
+                    # Click "Show full description" if present
+                    try:
+                        show_more = self.wait.until(
+                            EC.presence_of_element_located((By.XPATH, "//button[contains(text(), 'Show full description')]"))
+                        )
+                        show_more.click()
+                        time.sleep(1)
+                    except:
+                        print("No 'Show full description' button found")
+                    
+                    # Get company and job title
+                    try:
+                        company = self.wait.until(
+                            EC.presence_of_element_located((By.CSS_SELECTOR, "div.nJlQNd"))
+                        ).text
+                        job_title = self.wait.until(
+                            EC.presence_of_element_located((By.CSS_SELECTOR, "h2.KLsYvd"))
+                        ).text
+                        
+                        # Save the page with formatted title
+                        self.driver.execute_script(
+                            f'document.title = "{company} - {job_title}"'
+                        )
+                        self.save_current_page()
+                        time.sleep(1)
+                    except Exception as e:
+                        print(f"Error processing job details: {str(e)}")
+                    
+                except Exception as e:
+                    print(f"Error processing job card: {str(e)}")
+                    continue
                 
         except Exception as e:
-            print(f"Scrolling failed: {str(e)}")
+            print(f"Scrolling and processing failed: {str(e)}")
             
     def save_results(self, criteria, output_file):
         try:
@@ -236,11 +285,8 @@ def main():
     # Perform search for AI jobs
     bot.search("trustworthy ai jobs")
     
-    # Scroll through results
+    # Scroll through results and process each job listing
     bot.scroll_results()
-    
-    # Save matching results
-    bot.save_results("criteria to match", "results.json")
     
     # Keep browser open, close when done
     input("Press Enter to close the browser...")
