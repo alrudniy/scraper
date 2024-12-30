@@ -38,7 +38,7 @@ class WebsiteAutomation:
             os.makedirs(self.saves_dir)
         
         # Set up keyboard shortcut for saving
-        keyboard.on_press_key("ctrl+s", lambda _: self.save_current_page())
+        keyboard.add_hotkey('ctrl+s', self.save_current_page)
         
     def login(self, username, password):
         try:
