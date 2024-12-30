@@ -29,6 +29,9 @@ class WebsiteAutomation:
         self.wait = WebDriverWait(self.driver, 10)  # Wait up to 10 seconds
         self.url = url
         
+        # Navigate to the URL
+        self.driver.get(self.url)
+        
         # Create saves directory if it doesn't exist
         self.saves_dir = "webpage_saves"
         if not os.path.exists(self.saves_dir):
@@ -222,9 +225,7 @@ class WebsiteAutomation:
 # Example usage
 def main():
     # Initialize automation
-    bot = WebsiteAutomation("https://web.archive.org")  # Replace with your target website
-    # https://www.linkedin.com/ 
-    # https://www.indeed.coms/
+    bot = WebsiteAutomation("https://www.google.com")  # Using Google as a reliable test site
     
     print("Page saving enabled - Press Ctrl+S to save the current page")
     
