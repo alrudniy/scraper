@@ -157,18 +157,22 @@ class WebsiteAutomation:
             
     def search(self, query):
         try:
-            # Wait for search box and enter query
+            # Wait for Google search box and enter query
             search_box = self.wait.until(
-                EC.presence_of_element_located((By.NAME, "search"))  # Update selector
+                EC.presence_of_element_located((By.NAME, "q"))
             )
             search_box.clear()
             search_box.send_keys(query)
             search_box.send_keys(Keys.RETURN)
             
-            # Wait for results to load
-            self.wait.until(
-                EC.presence_of_element_located((By.CLASS_NAME, "search-results"))  # Update selector
+            # Wait for results to load and find Jobs tab
+            jobs_tab = self.wait.until(
+                EC.presence_of_element_located((By.LINK_TEXT, "Jobs"))
             )
+            jobs_tab.click()
+            
+            # Wait for jobs results to load
+            time.sleep(2)  # Give time for jobs page to load
             
         except Exception as e:
             print(f"Search failed: {str(e)}")
@@ -225,15 +229,12 @@ class WebsiteAutomation:
 # Example usage
 def main():
     # Initialize automation
-    bot = WebsiteAutomation("https://www.google.com")  # Using Google as a reliable test site
+    bot = WebsiteAutomation("https://www.google.com")
     
     print("Page saving enabled - Press Ctrl+S to save the current page")
     
-    # Login
-    bot.login("arudniy@drew.edu", "Bulktaxi789!")
-    
-    # Perform search
-    bot.search("trustworthy ai")
+    # Perform search for AI jobs
+    bot.search("trustworthy ai jobs")
     
     # Scroll through results
     bot.scroll_results()
