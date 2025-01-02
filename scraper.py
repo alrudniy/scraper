@@ -178,26 +178,39 @@ class WebsiteAutomation:
             print(f"Search failed: {str(e)}")
             
     def scroll_results(self, scroll_pause_time=2.0):
-        """Click through each job card with a pause between each."""
+        """Scroll through results page to bottom, then back to top."""
         try:
-            # Find all job listings
-            job_cards = self.wait.until(
-                EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.WpHeLc"))
-            )
+            # Get scroll height
+            last_height = self.driver.execute_script("return document.body.scrollHeight")
             
-            print(f"Found {len(job_cards)} job cards")
+            print("Scrolling down...")
+            while True:
+                # Scroll down to bottom
+                self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                
+                # Wait to load page
+                time.sleep(scroll_pause_time)
+                
+                # Calculate new scroll height and compare with last scroll height
+                new_height = self.driver.execute_script("return document.body.scrollHeight")
+                if new_height == last_height:
+                    break
+                last_height = new_height
+                
+            print("Reached bottom, scrolling back up...")
+            # Smooth scroll back to top
+            self.driver.execute_script("""
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            """)
+            time.sleep(scroll_pause_time)  # Wait for scroll up animation
             
-            for i, card in enumerate(job_cards, 1):
-                try:
-                    print(f"Clicking job card {i} of {len(job_cards)}")
-                    card.click()
-                    time.sleep(scroll_pause_time)  # Wait 2 seconds on each job
-                except Exception as e:
-                    print(f"Error clicking job card {i}: {str(e)}")
-                    continue
+            print("Scrolling complete")
                 
         except Exception as e:
-            print(f"Error finding job cards: {str(e)}")
+            print(f"Error during scrolling: {str(e)}")
             
     def save_results(self, criteria, output_file):
         try:
