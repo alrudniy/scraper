@@ -207,33 +207,60 @@ class WebsiteAutomation:
             """)
             time.sleep(scroll_pause_time)  # Wait for scroll up animation
             
-            print("Scrolling complete, now clicking through job listings...")
+            print("Scrolling complete, preparing to process job listings...")
             
-            # Wait for job cards container to be present
-            job_cards_container = self.wait.until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "ul.SxLO8"))
-            )
-            
-            # Find all job listings using a more specific selector
-            job_cards = job_cards_container.find_elements(By.CSS_SELECTOR, "li.iFjolb")
-            
-            print(f"Found {len(job_cards)} job cards")
-            
-            # Click through each job card
+            # Wait for job cards container with explicit wait
+            try:
+                job_cards_container = self.wait.until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "ul.SxLO8"))
+                )
+                print("Found job cards container")
+            except Exception as e:
+                print(f"Error finding job cards container: {str(e)}")
+                return
+
+            # Find all job cards with a more reliable selector
+            try:
+                job_cards = self.wait.until(
+                    EC.presence_of_all_elements_located((By.CSS_SELECTOR, "li.iFjolb"))
+                )
+                print(f"\nFound {len(job_cards)} job listings to process")
+            except Exception as e:
+                print(f"Error finding job cards: {str(e)}")
+                return
+
+            # Process each job card
             for i, card in enumerate(job_cards, 1):
                 try:
-                    print(f"Clicking job card {i} of {len(job_cards)}")
-                    # Scroll the card into view before clicking
-                    self.driver.execute_script("arguments[0].scrollIntoView(true);", card)
+                    print(f"\nProcessing job {i}/{len(job_cards)}")
+                    
+                    # Wait for card to be clickable
+                    self.wait.until(EC.element_to_be_clickable(card))
+                    
+                    # Scroll card into view with offset
+                    self.driver.execute_script(
+                        "arguments[0].scrollIntoView({block: 'center'});", 
+                        card
+                    )
+                    print(f"  - Scrolled to job card {i}")
                     time.sleep(0.5)  # Brief pause after scrolling
                     
-                    # Click the card using JavaScript
-                    self.driver.execute_script("arguments[0].click();", card)
-                    time.sleep(scroll_pause_time)  # Wait between clicks
+                    # Try multiple click methods
+                    try:
+                        card.click()  # Try regular click first
+                    except:
+                        try:
+                            # Fallback to JavaScript click
+                            self.driver.execute_script("arguments[0].click();", card)
+                        except Exception as click_error:
+                            print(f"  - Failed to click job {i}: {click_error}")
+                            continue
                     
-                    print(f"Successfully clicked job card {i}")
+                    print(f"  - Successfully clicked job {i}")
+                    time.sleep(2)  # 2-second pause between jobs
+                    
                 except Exception as e:
-                    print(f"Error clicking job card {i}: {str(e)}")
+                    print(f"  - Error processing job {i}: {str(e)}")
                     continue
                 
         except Exception as e:
