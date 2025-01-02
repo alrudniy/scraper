@@ -178,7 +178,7 @@ class WebsiteAutomation:
             print(f"Search failed: {str(e)}")
             
     def scroll_results(self, scroll_pause_time=2.0):
-        """Scroll through results page to bottom, then back to top."""
+        """Scroll through results page to bottom, back to top, then click through jobs."""
         try:
             # Get scroll height
             last_height = self.driver.execute_script("return document.body.scrollHeight")
@@ -207,10 +207,26 @@ class WebsiteAutomation:
             """)
             time.sleep(scroll_pause_time)  # Wait for scroll up animation
             
-            print("Scrolling complete")
+            print("Scrolling complete, now clicking through job listings...")
+            
+            # Find all job listings
+            job_cards = self.wait.until(
+                EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.WpHeLc"))
+            )
+            
+            print(f"Found {len(job_cards)} job cards")
+            
+            for i, card in enumerate(job_cards, 1):
+                try:
+                    print(f"Clicking job card {i} of {len(job_cards)}")
+                    card.click()
+                    time.sleep(scroll_pause_time)  # Wait between clicks
+                except Exception as e:
+                    print(f"Error clicking job card {i}: {str(e)}")
+                    continue
                 
         except Exception as e:
-            print(f"Error during scrolling: {str(e)}")
+            print(f"Error during scrolling/clicking: {str(e)}")
             
     def save_results(self, criteria, output_file):
         try:
