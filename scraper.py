@@ -209,24 +209,36 @@ class WebsiteAutomation:
             
             print("Scrolling complete, now clicking through job listings...")
             
-            # Find all job listings
-            job_cards = self.wait.until(
-                EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.WpHeLc"))
+            # Wait for job cards container to be present
+            job_cards_container = self.wait.until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "ul.SxLO8"))
             )
+            
+            # Find all job listings using a more specific selector
+            job_cards = job_cards_container.find_elements(By.CSS_SELECTOR, "li.iFjolb")
             
             print(f"Found {len(job_cards)} job cards")
             
+            # Click through each job card
             for i, card in enumerate(job_cards, 1):
                 try:
                     print(f"Clicking job card {i} of {len(job_cards)}")
-                    card.click()
+                    # Scroll the card into view before clicking
+                    self.driver.execute_script("arguments[0].scrollIntoView(true);", card)
+                    time.sleep(0.5)  # Brief pause after scrolling
+                    
+                    # Click the card using JavaScript
+                    self.driver.execute_script("arguments[0].click();", card)
                     time.sleep(scroll_pause_time)  # Wait between clicks
+                    
+                    print(f"Successfully clicked job card {i}")
                 except Exception as e:
                     print(f"Error clicking job card {i}: {str(e)}")
                     continue
                 
         except Exception as e:
             print(f"Error during scrolling/clicking: {str(e)}")
+            raise  # Re-raise the exception to see the full error details
             
     def save_results(self, criteria, output_file):
         try:
