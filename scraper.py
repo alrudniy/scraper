@@ -178,47 +178,35 @@ class WebsiteAutomation:
             print(f"Search failed: {str(e)}")
             
     def scroll_results(self, scroll_pause_time=2.0):
-        """Scroll through results page, clicking each job card to view details."""
+        """Scroll through results page to bottom and back to top."""
         try:
-            print("Starting to process job cards...")
+            # Get scroll height
+            last_height = self.driver.execute_script("return document.body.scrollHeight")
             
+            print("Scrolling down...")
             while True:
-                # Find all job cards currently visible
-                job_cards = self.driver.find_elements(By.CSS_SELECTOR, "div[jsslot]")
-                if not job_cards:
-                    print("No more job cards found")
-                    break
+                # Scroll down to bottom
+                self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
                 
-                # Process each visible job card
-                for job_card in job_cards:
-                    try:
-                        # Scroll the job card into view
-                        self.driver.execute_script("arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });", job_card)
-                        time.sleep(scroll_pause_time)
-                        
-                        # Click the job card to show details
-                        job_card.click()
-                        print("Clicked job card, waiting for details...")
-                        time.sleep(2)  # Wait for side card to load
-                        
-                    except Exception as card_error:
-                        print(f"Error processing job card: {str(card_error)}")
-                        continue
-                
-                # Get current scroll position and height
-                current_position = self.driver.execute_script("return window.pageYOffset;")
-                total_height = self.driver.execute_script("return document.body.scrollHeight;")
-                
-                # If we're near the bottom, we're done
-                if current_position + self.driver.execute_script("return window.innerHeight;") >= total_height:
-                    print("Reached bottom of the page")
-                    break
-                
-                # Scroll down for next batch of cards
-                self.driver.execute_script("window.scrollBy(0, window.innerHeight);")
+                # Wait to load page
                 time.sleep(scroll_pause_time)
-            
-            print("Job card processing complete")
+                
+                # Calculate new scroll height and compare with last scroll height
+                new_height = self.driver.execute_script("return document.body.scrollHeight")
+                if new_height == last_height:
+                    break
+                last_height = new_height
+                
+            print("Reached bottom, scrolling back up...")
+            # Smooth scroll back to top
+            self.driver.execute_script("""
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            """)
+            time.sleep(scroll_pause_time)  # Wait for scroll up animation
+            print("Scrolling complete")
             
         except Exception as e:
             print(f"Error during scrolling: {str(e)}")
